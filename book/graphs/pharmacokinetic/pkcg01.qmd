@@ -1,0 +1,117 @@
+---
+title: PKCG01
+subtitle: Plot of PK Concentration Over Time by Subject
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(tern)
+library(dplyr)
+library(ggplot2)
+library(nestcolor)
+
+adpc <- random.cdisc.data::cadpc
+```
+
+## Plot in Linear Scale
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot1, test = list(plot_v1 = "plot"), opts.label = "skip_test_strict"}
+adpc_a <- adpc %>%
+  filter(
+    PARAM == "Plasma Drug X",
+    ARMCD == "ARM A"
+  ) %>%
+  mutate(Patient_ID = sub(".*id-", "", USUBJID))
+
+use_title <- "Plot of Plasma Drug X (ug/mL) Concentrations Over Time by\nPatient: PK Evaluable Patients"
+use_subtitle <- "Analyte: Plasma Drug X (ug/mL) \nTreatment Group: ARM A"
+use_footnote <- "Program: \nOutput:"
+
+result <- g_ipp(
+  df = adpc_a,
+  xvar = "NFRLT",
+  yvar = "AVAL",
+  xlab = "Norminal Time from First Dose (hr)",
+  ylab = "Concentration (ug/mL)",
+  id_var = "Patient_ID",
+  add_baseline_hline = FALSE,
+  yvar_baseline = "AVAL", #  yvar_baseline cannot be NA or ignore
+  title = use_title,
+  subtitle = use_subtitle,
+  caption = use_footnote,
+  plotting_choices = "separate_by_obs"
+)
+plot <- result[[1]] # only show the first subject
+plot
+```
+
+`r webr_code_labels <- c("setup", "plot1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Plot in Log Scale
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot2, test = list(plot_v2 = "plot"), opts.label = "skip_test_strict"}
+adpc_a <- adpc %>%
+  filter(
+    PARAM == "Plasma Drug X",
+    ARMCD == "ARM A"
+  ) %>%
+  mutate(avalog = ifelse(AVAL != 0, AVAL, 0.001)) %>%
+  mutate(Patient_ID = sub(".*id-", "", USUBJID))
+
+use_title2 <- "Plot of Plasma Drug X (ug/mL) Concentrations Over Time by\nPatient: PK Evaluable Patients"
+use_subtitle2 <- "Analyte: Plasma Drug X (ug/mL) \nTreatment Group: ARM A"
+use_footnote2 <- "Program: \nOutput:"
+
+result <- g_ipp(
+  df = adpc_a,
+  xvar = "NFRLT",
+  yvar = "avalog",
+  xlab = "Norminal Time from First Dose (hr)",
+  ylab = "Concentration (ug/mL)",
+  id_var = "Patient_ID",
+  add_baseline_hline = FALSE,
+  yvar_baseline = "AVAL", #  yvar_baseline cannot be NA or ignore
+  title = use_title2,
+  subtitle = use_subtitle2,
+  caption = use_footnote2,
+  plotting_choices = "separate_by_obs"
+)
+plot <- result[[1]] + ggplot2::scale_y_log10(breaks = c(0.001, 0.01, 0.1, 1, 10), labels = c(0.001, 0.01, 0.1, 1, 10))
+plot
+```
+
+`r webr_code_labels <- c("setup", "plot2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+#| code-fold: show
+
+# In progress
+```
+
+{{< include ../../repro.qmd >}}
+
+::::

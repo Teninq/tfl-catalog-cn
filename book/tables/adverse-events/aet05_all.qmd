@@ -1,0 +1,159 @@
+---
+title: AET05_ALL
+subtitle: Adverse Event Rate Adjusted for Patient-Years at Risk -- All Occurrences
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(tern)
+library(dplyr)
+
+adsl <- random.cdisc.data::cadsl
+adaette <- random.cdisc.data::cadaette
+
+# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+adsl <- df_explicit_na(adsl)
+adaette <- df_explicit_na(adaette)
+
+# Create analysis dataset anl from the 2 parameters AEREPTTE & AETOT1
+anl_events <- adaette %>%
+  filter(PARAMCD == "AETOT1") %>%
+  select(USUBJID, ARM, ARMCD, n_events = AVAL) %>%
+  mutate(n_events = as.integer(n_events))
+
+anl_tte <- adaette %>%
+  filter(PARAMCD == "AEREPTTE") %>%
+  select(USUBJID, ARM, ARMCD, AVAL)
+
+anl <- full_join(anl_tte, anl_events, by = c("USUBJID", "ARM", "ARMCD"))
+```
+
+## Standard Table
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant1, test = list(result_v1 = "result")}
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by("ARM") %>%
+  estimate_incidence_rate(
+    vars = "AVAL",
+    n_events = "n_events",
+    control = control_incidence_rate(num_pt_year = 100)
+  )
+
+result <- build_table(lyt, anl, alt_counts_df = adsl)
+result
+```
+
+`r webr_code_labels <- c("setup", "variant1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Table Setting Type of Confidence Interval
+
+The type of confidence interval can be specified through the `conf_type` argument.
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant2, test = list(result_v2 = "result")}
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by("ARM") %>%
+  estimate_incidence_rate(
+    vars = "AVAL",
+    n_events = "n_events",
+    control = control_incidence_rate(conf_type = "exact", num_pt_year = 100)
+  )
+
+result <- build_table(lyt, anl, alt_counts_df = adsl)
+result
+```
+
+`r webr_code_labels <- c("setup", "variant2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+::: {.panel-tabset .nav-justified}
+## {{< fa regular file-lines fa-sm fa-fw >}} Preview
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+library(teal.modules.clinical)
+
+## Data reproducible code
+data <- teal_data()
+data <- within(data, {
+  library(dplyr)
+
+  ADSL <- random.cdisc.data::cadsl
+  ADAETTE <- random.cdisc.data::cadaette
+
+  # Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+  ADSL <- df_explicit_na(ADSL)
+  ADAETTE <- df_explicit_na(ADAETTE)
+
+  # Create analysis dataset anl from the 2 parameters AEREPTTE & AETOT1
+  anl_events <- ADAETTE %>%
+    filter(PARAMCD %in% c("AETOT1", "AETOT2", "AETOT3")) %>%
+    select(USUBJID, STUDYID, PARAMCD, ARM, ARMCD, n_events = AVAL) %>%
+    mutate(n_events = as.integer(n_events))
+
+  anl_tte <- ADAETTE %>%
+    filter(PARAMCD == "AEREPTTE") %>%
+    select(USUBJID, STUDYID, ARM, ARMCD, AVAL, AVALU)
+
+  ADAETTE <- full_join(anl_tte, anl_events, by = c("USUBJID", "STUDYID", "ARM", "ARMCD"))
+})
+datanames <- c("ADSL", "ADAETTE")
+datanames(data) <- datanames
+join_keys(data) <- default_cdisc_join_keys[datanames]
+
+## Reusable Configuration For Modules
+ADSL <- data[["ADSL"]]
+ADAETTE <- data[["ADAETTE"]]
+
+## Setup App
+app <- init(
+  data = data,
+  modules = modules(
+    tm_t_events_patyear(
+      label = "AE Rate Adjusted for Patient-Years at Risk - All Occurrences Table",
+      dataname = "ADAETTE",
+      arm_var = choices_selected(
+        choices = variable_choices(ADSL, c("ARM", "ARMCD")),
+        selected = "ARMCD"
+      ),
+      paramcd = choices_selected(
+        choices = value_choices(ADAETTE, "PARAMCD"),
+        selected = "AETOT1"
+      ),
+      events_var = choices_selected(
+        choices = variable_choices(ADAETTE, "n_events"),
+        selected = "n_events",
+        fixed = TRUE
+      )
+    )
+  )
+)
+
+shinyApp(app$ui, app$server)
+```
+
+{{< include ../../_utils/shinylive.qmd >}}
+:::
+
+{{< include ../../repro.qmd >}}
+
+::::

@@ -1,0 +1,132 @@
+---
+title: LBT02
+subtitle: Laboratory Test Results by Visit
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+# Preparation of an illustrative dataset
+library(tern)
+
+adsl <- random.cdisc.data::cadsl
+adlb <- random.cdisc.data::cadlb
+
+adlb_labels <- var_labels(adlb)
+
+# For illustration purposes, the example focuses on ALT
+# Measurements starting from baseline and excluding all screening visits
+adlb <- subset(adlb, AVISIT != "SCREENING" & PARAMCD == "ALT")
+adlb$AVISIT <- droplevels(adlb$AVISIT)
+
+var_labels(adlb) <- adlb_labels
+
+# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+adsl <- df_explicit_na(adsl)
+adlb <- df_explicit_na(adlb)
+```
+
+## Standard Table
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant1, test = list(result_v1 = "result")}
+# Define the split function
+split_fun <- drop_split_levels
+
+l <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by(var = "ARM") %>%
+  add_overall_col("All Patients") %>%
+  split_rows_by(
+    var = "AVISIT",
+    split_fun = split_fun,
+    label_pos = "topleft",
+    split_label = obj_label(adlb$AVISIT)
+  ) %>%
+  analyze_vars(vars = "AVAL")
+
+result <- build_table(l,
+  df = adlb,
+  alt_counts_df = adsl
+)
+result
+```
+
+`r webr_code_labels <- c("setup", "variant1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+::: {.panel-tabset .nav-justified}
+## {{< fa regular file-lines fa-sm fa-fw >}} Preview
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+library(teal.modules.clinical)
+
+## Data reproducible code
+data <- teal_data()
+data <- within(data, {
+  ADSL <- random.cdisc.data::cadsl
+  ADLB <- random.cdisc.data::cadlb
+
+  # Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+  ADSL <- df_explicit_na(ADSL)
+  ADLB <- df_explicit_na(ADLB)
+})
+datanames <- c("ADSL", "ADLB")
+datanames(data) <- datanames
+join_keys(data) <- default_cdisc_join_keys[datanames]
+
+## Reusable Configuration For Modules
+ADSL <- data[["ADSL"]]
+ADLB <- data[["ADLB"]]
+
+## Setup App
+app <- init(
+  data = data,
+  modules = modules(
+    tm_t_summary_by(
+      label = "Laboratory Test Results by Visit",
+      dataname = "ADLB",
+      arm_var = choices_selected(
+        choices = variable_choices(ADSL, c("ARM", "ARMCD")),
+        selected = "ARM"
+      ),
+      by_vars = choices_selected(
+        # note: order matters here. If `PARAM` is first, the split will be first by `PARAM`and then by `AVISIT`
+        choices = variable_choices(ADLB, c("PARAM", "AVISIT")),
+        selected = c("PARAM", "AVISIT")
+      ),
+      summarize_vars = choices_selected(
+        choices = variable_choices(ADLB, c("AVAL")),
+        selected = c("AVAL")
+      ),
+      useNA = "ifany",
+      paramcd = choices_selected(
+        choices = value_choices(ADLB, "PARAMCD", "PARAM"),
+        selected = "ALT"
+      )
+    )
+  ),
+  filter = teal_slices(teal_slice("ADLB", "AVAL", selected = NULL))
+)
+shinyApp(app$ui, app$server)
+```
+
+{{< include ../../_utils/shinylive.qmd >}}
+:::
+
+{{< include ../../repro.qmd >}}
+
+::::

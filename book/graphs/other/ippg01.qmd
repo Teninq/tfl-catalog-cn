@@ -1,0 +1,184 @@
+---
+title: IPPG01
+subtitle: Individual Patient Plot Over Time
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+For illustration purposes, we will subset the `adlb` dataset for safety population in treatment arm A and a specific lab parameter (`ALT`).
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(tern)
+library(dplyr)
+library(ggplot2)
+library(nestcolor)
+
+# use small sample size
+adsl <- random.cdisc.data::cadsl %>% slice(1:15)
+adlb <- random.cdisc.data::cadlb %>% filter(USUBJID %in% adsl$USUBJID)
+
+# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+adlb <- df_explicit_na(adlb)
+
+adlb_f <- adlb %>%
+  filter(
+    SAFFL == "Y",
+    PARAMCD == "ALT",
+    AVISIT != "SCREENING",
+    ARMCD == "ARM A"
+  ) %>%
+  mutate(Patient_ID = sub(".*id-", "", USUBJID))
+```
+
+## Standard Plot
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+The user can select different `plotting_choices` depending on their preference.
+To demonstrate, separate plots are produced with a maximum of 3 observations each.
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plots1, test = list(plots_v1 = "plots"), opts.label = "skip_test_strict"}
+plots <- g_ipp(
+  df = adlb_f,
+  xvar = "AVISIT",
+  yvar = "AVAL",
+  xlab = "Visit",
+  ylab = "SGOT/ALT (U/L)",
+  id_var = "Patient_ID",
+  title = "Individual Patient Plots",
+  subtitle = "Treatment Arm A",
+  plotting_choices = "split_by_max_obs",
+  max_obs_per_plot = 3
+)
+plots
+```
+
+`r webr_code_labels <- c("setup", "plots1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Plot with Patient Baselines as Reference
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+Here, patients' individual baseline values will be shown for reference.
+Note that users can provide their own custom theme to the function via the `ggtheme` argument.
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plots2, test = list(plots_v2 = "plots"), opts.label = "skip_test_strict"}
+plots <- g_ipp(
+  df = adlb_f,
+  xvar = "AVISIT",
+  yvar = "AVAL",
+  xlab = "Visit",
+  ylab = "SGOT/ALT (U/L)",
+  id_var = "Patient_ID",
+  title = "Individual Patient Plots",
+  subtitle = "Treatment Arm A",
+  add_baseline_hline = TRUE,
+  yvar_baseline = "BASE",
+  ggtheme = theme_minimal(),
+  plotting_choices = "split_by_max_obs",
+  max_obs_per_plot = 3
+)
+plots
+```
+
+`r webr_code_labels <- c("setup", "plots2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+::: {.panel-tabset .nav-justified}
+## {{< fa regular file-lines fa-sm fa-fw >}} Preview
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+library(teal.modules.clinical)
+
+## Data reproducible code
+data <- teal_data()
+data <- within(data, {
+  library(dplyr)
+
+  # use small sample size
+  ADSL <- random.cdisc.data::cadsl %>% slice(1:15)
+  ADLB <- random.cdisc.data::cadlb %>% filter(USUBJID %in% ADSL$USUBJID)
+
+  # Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+  ADSL <- df_explicit_na(ADSL)
+  ADLB <- df_explicit_na(ADLB) %>%
+    filter(AVISIT != "SCREENING")
+})
+datanames <- c("ADSL", "ADLB")
+datanames(data) <- datanames
+join_keys(data) <- default_cdisc_join_keys[datanames]
+
+## Reusable Configuration For Modules
+ADLB <- data[["ADLB"]]
+
+## Setup App
+app <- init(
+  data = data,
+  modules = modules(
+    tm_g_ipp(
+      label = "Individual Patient Plot",
+      dataname = "ADLB",
+      arm_var = choices_selected(
+        value_choices(ADLB, c("ARMCD")),
+        "ARM A"
+      ),
+      paramcd = choices_selected(
+        value_choices(ADLB, "PARAMCD"),
+        "ALT"
+      ),
+      aval_var = choices_selected(
+        variable_choices(ADLB, c("AVAL")),
+        "AVAL"
+      ),
+      avalu_var = choices_selected(
+        variable_choices(ADLB, c("AVALU")),
+        "AVALU",
+        fixed = TRUE
+      ),
+      id_var = choices_selected(
+        variable_choices(ADLB, c("USUBJID")),
+        "USUBJID",
+        fixed = TRUE
+      ),
+      visit_var = choices_selected(
+        variable_choices(ADLB, c("AVISIT")),
+        "AVISIT"
+      ),
+      baseline_var = choices_selected(
+        variable_choices(ADLB, c("BASE")),
+        "BASE",
+        fixed = TRUE
+      ),
+      add_baseline_hline = FALSE,
+      separate_by_obs = FALSE
+    )
+  )
+)
+
+shinyApp(app$ui, app$server)
+```
+
+{{< include ../../_utils/shinylive.qmd >}}
+:::
+
+{{< include ../../repro.qmd >}}
+
+::::

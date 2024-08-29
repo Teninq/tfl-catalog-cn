@@ -1,0 +1,111 @@
+---
+title: PKPT02
+subtitle: Pharmacokinetic Parameter Summary -- Plasma/Serum/Blood PK Parameters (Stats in Rows)
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(dplyr)
+library(tern)
+
+adpp <- random.cdisc.data::cadpp
+adpp <- adpp %>% filter(PPSPEC == "Plasma", AVISIT == "CYCLE 1 DAY 1")
+```
+
+## Standard Table -- Plasma
+
+```{r lyt}
+# lyt creation
+lyt <- basic_table() %>%
+  split_cols_by(
+    var = "ARMCD",
+    split_fun = trim_levels_in_group("ARMCD"),
+    split_label = "Treatment Arm"
+  ) %>%
+  split_rows_by(
+    var = "PKPARAM",
+    label_pos = "topleft",
+    split_label = "PK Parameter"
+  ) %>%
+  tern::analyze_vars(
+    vars = "AVAL",
+    .stats = c("n", "mean_sd", "cv", "geom_mean", "geom_cv", "median", "range"),
+    .formats = c(
+      n = "xx.",
+      mean_sd = format_sigfig(3, "xx (xx)"),
+      cv = "xx.x",
+      geom_mean = format_sigfig(3),
+      geom_cv = "xx.x",
+      median = format_sigfig(3),
+      range = format_sigfig(3, "xx - xx")
+    )
+  )
+```
+
+#### Plasma Drug X
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+<!-- skip strict because of https://github.com/insightsengineering/tern/pull/1182 -->
+```{r variant1, test = list(result_v1 = "result"), opts.label = ifelse(packageVersion("tern") < "0.9.3.9020", "skip_test_strict", "")}
+adpp0 <- adpp %>%
+  filter(PPCAT == "Plasma Drug X") %>%
+  h_pkparam_sort() %>%
+  mutate(PKPARAM = factor(paste0(TLG_DISPLAY, " (", AVALU, ")"))) %>%
+  mutate(PKPARAM = reorder(PKPARAM, TLG_ORDER))
+
+result <- build_table(lyt, df = adpp0)
+main_title(result) <- paste("Summary of", unique(adpp0$PPSPEC), "PK Parameter by Treatment Arm, PK Population")
+subtitles(result) <- paste("Analyte:", unique(adpp0$PPCAT), "\nVisit:", unique(adpp0$AVISIT))
+result
+```
+
+`r webr_code_labels <- c("setup", "lyt", "variant1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+#### Plasma Drug Y
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+<!-- skip strict because of https://github.com/insightsengineering/tern/pull/1182 -->
+```{r variant2, test = list(result_v2 = "result"), opts.label = ifelse(packageVersion("tern") < "0.9.3.9020", "skip_test_strict", "")}
+adpp1 <- adpp %>%
+  filter(PPCAT == "Plasma Drug Y") %>%
+  h_pkparam_sort() %>%
+  mutate(PKPARAM = factor(paste0(TLG_DISPLAY, " (", AVALU, ")"))) %>%
+  mutate(PKPARAM = reorder(PKPARAM, TLG_ORDER))
+
+result <- build_table(lyt, df = adpp1)
+main_title(result) <- paste("Summary of", unique(adpp1$PPSPEC), "PK Parameter by Treatment Arm, PK Population")
+subtitles(result) <- paste("Analyte:", unique(adpp1$PPCAT), "\nVisit:", unique(adpp1$AVISIT))
+result
+```
+
+`r webr_code_labels <- c("setup", "lyt", "variant2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+#| code-fold: show
+
+# In progress
+```
+
+{{< include ../../repro.qmd >}}
+
+::::

@@ -1,0 +1,364 @@
+---
+title: RSPT01
+subtitle: Best Overall Response
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(dplyr)
+library(tern)
+
+adsl <- random.cdisc.data::cadsl
+adrs <- random.cdisc.data::cadrs
+
+# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+adsl <- df_explicit_na(adsl)
+adrs <- df_explicit_na(adrs)
+
+anl_adrs <- adrs %>%
+  filter(PARAMCD == "INVET") %>%
+  select(STUDYID, USUBJID, PARAMCD, AVISIT, AVALC)
+anl_adsl <- adsl %>%
+  select(STUDYID, USUBJID, ARM, STRATA1)
+```
+
+Data pre-processing is done to label the analysis value (`AVALC`) so as to improve the readability of the output table.
+In addition, the *response* is binary defined (`is_rsp`, responder yes/no) depending on the analysis value.
+Finally, for comparison purposes, the reference arm is specified.
+
+```{r pre-processing}
+#| code-fold: show
+
+# Pre-Processing
+
+anl <- anl_adsl %>%
+  left_join(anl_adrs, by = c("STUDYID", "USUBJID")) %>%
+  mutate(rsp_lab = d_onco_rsp_label(AVALC)) %>%
+  mutate(is_rsp = AVALC %in% c("CR", "PR")) %>%
+  mutate(ARM = relevel(ARM, ref = "A: Drug X")) %>%
+  var_relabel(ARM = "Description of Planned Arm")
+```
+
+## Standard Table
+
+The tabulation layout is built in layers for the analysis of overall response and applied to the pre-processed dataset.
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant1, test = list(result_v1 = "result")}
+lyt_01 <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by(var = "ARM", ref_group = "A: Drug X") %>%
+  estimate_proportion(
+    vars = "is_rsp",
+    table_names = "est_prop"
+  ) %>%
+  estimate_proportion_diff(
+    vars = "is_rsp",
+    show_labels = "visible",
+    var_labels = "Unstratified Analysis",
+    table_names = "est_prop_diff"
+  ) %>%
+  test_proportion_diff(
+    vars = "is_rsp",
+    table_names = "test_prop_diff"
+  ) %>%
+  estimate_odds_ratio(
+    vars = "is_rsp",
+    table_names = "est_or"
+  ) %>%
+  estimate_multinomial_response(var = "rsp_lab")
+
+result <- build_table(lyt = lyt_01, df = anl)
+result
+```
+
+`r webr_code_labels <- c("setup", "pre-processing", "variant1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Table Selecting <br/> Sections to Display
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+Remove (or add) rows of results by removing/adding the corresponding layers from the layout.
+For instance, the odds-ratio row is removed by simply removing the `estimate_odds_ratio` call:
+
+```{r variant2, test = list(result_v2 = "result")}
+lyt_02 <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by(var = "ARM", ref_group = "A: Drug X") %>%
+  estimate_proportion(
+    vars = "is_rsp",
+    table_names = "est_prop"
+  ) %>%
+  estimate_proportion_diff(
+    vars = "is_rsp",
+    show_labels = "visible",
+    var_labels = "Unstratified Analysis",
+    table_names = "est_prop_diff"
+  ) %>%
+  test_proportion_diff(
+    vars = "is_rsp",
+    table_names = "test_prop"
+  ) %>%
+  estimate_multinomial_response(var = "rsp_lab")
+
+result <- build_table(lyt = lyt_02, df = anl)
+result
+```
+
+`r webr_code_labels <- c("setup", "pre-processing", "variant2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Table Modifying Analysis Details like Type of <br/> Confidence Interval, Alpha Level, Test Statistic
+
+The confidence level is controlled by the `conf_level` parameter to the estimation functions.
+Similarly, the methods for tests and confidence interval can be modified (see `?estimate_proportion_diff`).
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant3, test = list(result_v3 = "result")}
+conf_level <- 0.90
+lyt_03 <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by(var = "ARM", ref_group = "A: Drug X") %>%
+  estimate_proportion(
+    vars = "is_rsp",
+    conf_level = conf_level,
+    method = "clopper-pearson",
+    table_names = "est_prop"
+  ) %>%
+  estimate_proportion_diff(
+    vars = "is_rsp",
+    show_labels = "visible",
+    var_labels = "Unstratified Analysis",
+    conf_level = conf_level,
+    method = "ha",
+    table_names = "est_prop_diff"
+  ) %>%
+  test_proportion_diff(
+    vars = "is_rsp",
+    method = "fisher",
+    table_names = "test_prop"
+  ) %>%
+  estimate_odds_ratio(
+    vars = "is_rsp",
+    conf_level = conf_level,
+    table_names = "est_or"
+  ) %>%
+  estimate_multinomial_response(
+    var = "rsp_lab",
+    conf_level = conf_level,
+    method = "clopper-pearson"
+  )
+
+result <- build_table(lyt = lyt_03, df = anl)
+result
+```
+
+`r webr_code_labels <- c("setup", "pre-processing", "variant3")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Table with <br/> Stratified Analysis
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+The stratified analysis section can be added by defining the analyses needed with `control_binary_comparison` for the argument `strat_analysis` and identifying the stratification variables to use.
+
+<!-- skip strict because of https://github.com/therneau/survival/issues/240 -->
+```{r variant4, test = list(result_v4 = "result"), opts.label = ifelse(packageVersion("survival") < "3.5-8", "skip_test_strict", "")}
+strata <- "STRATA1"
+lyt_04 <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by(var = "ARM", ref_group = "A: Drug X") %>%
+  estimate_proportion(
+    vars = "is_rsp",
+    table_names = "est_prop"
+  ) %>%
+  estimate_proportion_diff(
+    vars = "is_rsp",
+    show_labels = "visible",
+    var_labels = "Unstratified Analysis",
+    table_names = "est_prop_diff"
+  ) %>%
+  test_proportion_diff(
+    vars = "is_rsp",
+    table_names = "test_prop"
+  ) %>%
+  estimate_odds_ratio(
+    vars = "is_rsp",
+    table_names = "est_or"
+  ) %>%
+  estimate_proportion_diff(
+    vars = "is_rsp",
+    show_labels = "visible",
+    var_labels = "Stratified Analysis",
+    method = "cmh",
+    variables = list(strata = strata),
+    table_names = "est_prop_diff_strat"
+  ) %>%
+  test_proportion_diff(
+    vars = "is_rsp",
+    method = "cmh",
+    variables = list(strata = strata),
+    table_names = "test_prop_strat"
+  ) %>%
+  estimate_odds_ratio(
+    vars = "is_rsp",
+    variables = list(strata = strata, arm = "ARM"),
+    table_names = "est_or_strat"
+  ) %>%
+  estimate_multinomial_response(var = "rsp_lab")
+
+result <- build_table(lyt = lyt_04, df = anl)
+result
+```
+
+`r webr_code_labels <- c("setup", "pre-processing", "variant4")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Table Modifying the Definition <br/> of Overall Response
+
+The definition of *responders* is realized during the pre-processing step.
+The layout does not need to be modified and can be reused.
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant5, test = list(result_v5 = "result")}
+anl <- anl_adsl %>%
+  left_join(anl_adrs, by = c("STUDYID", "USUBJID")) %>%
+  mutate(rsp_lab = d_onco_rsp_label(AVALC)) %>%
+  mutate(is_rsp = AVALC == "CR") %>%
+  mutate(ARM = relevel(ARM, ref = "A: Drug X")) %>%
+  var_relabel(ARM = "Description of Planned Arm")
+
+result <- build_table(lyt = lyt_01, df = anl)
+result
+```
+
+`r webr_code_labels <- c("setup", "pre-processing", "variant5")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Table Defining New <br/> Sections to Display
+
+Similarly to in the previous tab, redefinition or relabeling of the result is a pre-processing step and the original table layout can be reused.
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant6, test = list(result_v6 = "result")}
+anl <- anl_adsl %>%
+  left_join(anl_adrs, by = c("STUDYID", "USUBJID")) %>%
+  mutate(rsp_lab = as.character(d_onco_rsp_label(AVALC))) %>%
+  mutate(
+    rsp_lab = case_when(
+      rsp_lab == "Complete Response (CR)" ~ "No Progression",
+      rsp_lab == "Partial Response (PR)" ~ "No Progression",
+      rsp_lab == "Stable Disease (SD)" ~ "No Progression",
+      TRUE ~ rsp_lab
+    )
+  ) %>%
+  mutate(is_rsp = rsp_lab %in% "No Progression") %>%
+  mutate(ARM = relevel(ARM, ref = "A: Drug X")) %>%
+  var_relabel(ARM = "Description of Planned Arm")
+
+result <- build_table(lyt = lyt_01, df = anl)
+result
+```
+
+`r webr_code_labels <- c("setup", "pre-processing", "variant6")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+::: {.panel-tabset .nav-justified}
+## {{< fa regular file-lines fa-sm fa-fw >}} Preview
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+library(teal.modules.clinical)
+
+## Data reproducible code
+data <- teal_data()
+data <- within(data, {
+  library(dplyr)
+
+  ADSL <- random.cdisc.data::cadsl
+  ADRS <- random.cdisc.data::cadrs
+
+  # Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+  ADSL <- df_explicit_na(ADSL)
+  ADRS <- df_explicit_na(ADRS)
+
+  ADSL <- ADSL %>%
+    mutate(Dum_ARM = factor(rep("Single ARM", nrow(.))))
+  ADRS <- ADRS %>%
+    mutate(Dum_ARM = factor(rep("Single ARM", nrow(.))))
+})
+datanames <- c("ADSL", "ADRS")
+datanames(data) <- datanames
+join_keys(data) <- default_cdisc_join_keys[datanames]
+
+## Reusable Configuration For Modules
+ADRS <- data[["ADRS"]]
+arm_ref_comp <- list(
+  ACTARMCD = list(
+    ref = "ARM B",
+    comp = c("ARM A", "ARM C")
+  ),
+  ARM = list(
+    ref = "B: Placebo",
+    comp = c("A: Drug X", "C: Combination")
+  )
+)
+
+## Setup App
+app <- init(
+  data = data,
+  modules = modules(
+    tm_t_binary_outcome(
+      label = "Responders",
+      dataname = "ADRS",
+      paramcd = choices_selected(
+        choices = value_choices(ADRS, "PARAMCD", "PARAM"),
+        selected = "BESRSPI"
+      ),
+      arm_var = choices_selected(
+        choices = variable_choices(ADRS, c("ARM", "ARMCD", "ACTARMCD", "Dum_ARM")),
+        selected = "ARM"
+      ),
+      arm_ref_comp = arm_ref_comp,
+      strata_var = choices_selected(
+        choices = variable_choices(ADRS, c("SEX", "BMRKR2")),
+        select = NULL
+      ),
+      rsp_table = TRUE
+    )
+  )
+)
+
+shinyApp(app$ui, app$server)
+```
+
+{{< include ../../_utils/shinylive.qmd >}}
+:::
+
+{{< include ../../repro.qmd >}}
+
+::::

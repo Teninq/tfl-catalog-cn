@@ -1,0 +1,118 @@
+---
+title: PKCG02
+subtitle: Plot of PK Concentration Over Time by Cohort/Treatment Group/Dose
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(tern)
+library(dplyr)
+library(ggplot2)
+library(nestcolor)
+
+adpc <- random.cdisc.data::cadpc
+```
+
+## Plot in Linear Scale
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot1, test = list(plot_v1 = "plot"), opts.label = "skip_test_strict"}
+adpc_a <- adpc %>%
+  filter(
+    PARAM == "Plasma Drug X",
+    ARMCD == "ARM A"
+  ) %>%
+  mutate(Patient_ID = sub(".*id-", "", USUBJID)) %>%
+  filter(Patient_ID %in% unique(Patient_ID)[1:10])
+
+use_title1 <- "Plot of X Concentration (ug/mL) Over Time by Treatment: \nPK Evaluable Patients"
+use_subtitle1 <- "Analyte: Plasma X (ug/mL) \nTreatment Group: ARM A"
+use_footnote1 <- "Program: \nOutput:"
+
+plot <- g_ipp(
+  df = adpc_a,
+  xvar = "NFRLT",
+  yvar = "AVAL",
+  xlab = "Norminal Time from First Dose (hr)",
+  ylab = "Concentration (ug/mL)",
+  id_var = "Patient_ID",
+  add_baseline_hline = FALSE,
+  yvar_baseline = "AVAL", #  yvar_baseline cannot be NA or ignore
+  title = use_title1,
+  subtitle = use_subtitle1,
+  caption = use_footnote1,
+  plotting_choices = "all_in_one"
+)
+plot
+```
+
+`r webr_code_labels <- c("setup", "plot1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## Plot in Log Scale
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot2, test = list(plot_v2 = "plot"), opts.label = "skip_test_strict"}
+adpc_a <- adpc %>%
+  filter(
+    PARAM == "Plasma Drug X",
+    ARMCD == "ARM A"
+  ) %>%
+  mutate(Patient_ID = sub(".*id-", "", USUBJID)) %>%
+  mutate(avalog = ifelse(AVAL != 0, AVAL, 0.001)) %>%
+  filter(Patient_ID %in% unique(Patient_ID)[1:10])
+
+use_title3 <- "Log-scale Plot of X Concentration (ug/mL) Over Time by Treatment: \nPK Evaluable Patients"
+use_subtitle3 <- "Analyte: Plasma X (ug/mL) \nTreatment Group: ARM A"
+use_footnote3 <- "Program: \nOutput:"
+
+result <- g_ipp(
+  df = adpc_a,
+  xvar = "NFRLT",
+  yvar = "avalog",
+  xlab = "Norminal Time from First Dose (hr)",
+  ylab = "Concentration (ug/mL)",
+  id_var = "Patient_ID",
+  add_baseline_hline = FALSE,
+  yvar_baseline = "AVAL", #  yvar_baseline cannot be NA or ignore
+  title = use_title3,
+  caption = use_footnote3,
+  subtitle = use_subtitle3,
+  plotting_choices = "all_in_one"
+)
+plot <- result + ggplot2::scale_y_log10(breaks = c(0.001, 0.01, 0.1, 1, 10), labels = c(0.001, 0.01, 0.1, 1, 10))
+plot
+```
+
+`r webr_code_labels <- c("setup", "plot2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+#| code-fold: show
+
+# In progress
+```
+
+{{< include ../../repro.qmd >}}
+
+::::

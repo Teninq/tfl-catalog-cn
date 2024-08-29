@@ -1,0 +1,53 @@
+Package: tlg.catalog.pkg
+Title: Tables, Listings and Graphs Catalog
+Version: 0.1.0.9025
+Authors@R: c(
+    person("Joe", "Zhu", , "joe.zhu@roche.com", role = c("aut", "cre")),
+    person("Pawel", "Rucki", , "pawel.rucki@roche.com", role = "aut"),
+    person("F. Hoffmann-La Roche AG", role = c("cph", "fnd"))
+  )
+Description: Testing package for TLG Catalog outputs.
+License: Apache License 2.0 | file LICENSE
+Depends:
+    R (>= 4.0)
+Suggests:
+    binom,
+    broom,
+    cowplot,
+    DescTools,
+    dplyr,
+    forcats,
+    formatters,
+    ggplot2,
+    ggrepel,
+    grid,
+    knitr,
+    lubridate,
+    nestcolor,
+    quarto (>= 1.4),
+    random.cdisc.data,
+    renv,
+    rlistings,
+    rtables,
+    scales,
+    shinylive,
+    stats,
+    stringr,
+    svglite,
+    teal,
+    teal.modules.clinical,
+    teal.modules.general,
+    teal.transform,
+    tern,
+    tern.mmrm,
+    tern.rbmi,
+    testthat,
+    tibble,
+    tidyr,
+    vdiffr,
+    webshot2,
+    withr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-US
+RoxygenNote: 7.2.3

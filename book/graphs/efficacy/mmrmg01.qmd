@@ -1,0 +1,180 @@
+---
+title: MMRMG01
+subtitle: Plots for Mixed-Effect Model Repeated Measures Analysis
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+Given an MMRM fitted with `s_mmrm`, `g_mmrm_lsmeans` displays for each visit the adjusted means within group and/or difference in adjusted means between groups.
+`g_mmrm_diagnostic` displays marginal residual plots for evaluating model fit.
+
+:::: {.panel-tabset}
+## Data Setup and <br/> Model Fitting
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(dplyr)
+library(tern.mmrm)
+library(nestcolor)
+
+adsl <- random.cdisc.data::cadsl
+adqs <- random.cdisc.data::cadqs
+
+adqs_f <- adqs %>%
+  dplyr::filter(PARAMCD == "FKSI-FWB" & !AVISIT %in% c("BASELINE")) %>%
+  droplevels() %>%
+  dplyr::mutate(ARM = factor(ARM, levels = c("B: Placebo", "A: Drug X", "C: Combination"))) %>%
+  dplyr::mutate(AVISITN = rank(AVISITN) %>% as.factor() %>% as.numeric() %>% as.factor())
+
+mmrm_results <- fit_mmrm(
+  vars = list(
+    response = "AVAL",
+    covariates = c("STRATA2"),
+    id = "USUBJID",
+    arm = "ARM",
+    visit = "AVISIT"
+  ),
+  data = adqs_f
+)
+```
+
+## Least Squares Means: <br/> Estimates Within Groups
+
+### Considering the treatment variable in the model
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot1, dev.args = list(pointsize = 6), test = list(plot_v1 = "plot"), opts.label = "skip_test_strict"}
+plot <- g_mmrm_lsmeans(
+  mmrm_results,
+  select = "estimates",
+  xlab = "Visit"
+)
+plot
+```
+
+### Considering the treatment variable in the model, with lines
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot2, dev.args = list(pointsize = 6), test = list(plot_v2 = "plot"), opts.label = "skip_test_strict"}
+plot <- g_mmrm_lsmeans(
+  mmrm_results,
+  select = "estimates",
+  xlab = "Visit",
+  show_lines = TRUE
+)
+plot
+```
+
+### Considering the treatment variable in the model, with statistics table
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot3, dev.args = list(pointsize = 6), fig.height = 7, test = list(plot_v3 = "plot"), opts.label = "skip_test_strict"}
+plot <- g_mmrm_lsmeans(
+  mmrm_results,
+  select = "estimates",
+  xlab = "Visit",
+  table_stats = c("n", "estimate", "se", "ci"),
+  table_font_size = 4,
+  table_rel_height = 0.6
+)
+plot
+```
+
+## Least Squares Means: <br/> Contrasts Between Groups
+
+Users can choose to display both estimates and contrasts together by running `g_mmrm_lsmeans(mmrm_results)`.
+
+<!-- skip strict because of https://github.com/r-lib/gtable/pull/94 -->
+```{r plot4, dev.args = list(pointsize = 6), test = list(plot_v4 = "plot"), opts.label = "skip_test_strict"}
+plot <- g_mmrm_lsmeans(
+  mmrm_results,
+  select = "contrasts",
+  titles = c(contrasts = "Contrasts of FKSI-FWB means"),
+  xlab = "Visit"
+)
+plot
+```
+
+## Model Diagnostics: Marginal <br/> Fitted Values vs. Residuals
+
+```{r plot5, dev.args = list(pointsize = 6), test = list(plot_v5 = "plot")}
+plot <- g_mmrm_diagnostic(mmrm_results)
+plot
+```
+
+## Model Diagnostics: Normality <br/> of Marginal Residuals
+
+```{r plot6, dev.args = list(pointsize = 6), test = list(plot_v6 = "plot")}
+plot <- g_mmrm_diagnostic(mmrm_results, type = "q-q-residual")
+plot
+```
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+library(teal.modules.clinical)
+
+## Data reproducible code
+data <- teal_data()
+data <- within(data, {
+  library(dplyr)
+
+  ADSL <- random.cdisc.data::cadsl
+  ADQS <- random.cdisc.data::cadqs %>%
+    filter(ABLFL != "Y" & ABLFL2 != "Y") %>%
+    filter(AVISIT %in% c("WEEK 1 DAY 8", "WEEK 2 DAY 15", "WEEK 3 DAY 22")) %>%
+    mutate(
+      AVISIT = as.factor(AVISIT),
+      AVISITN = rank(AVISITN) %>%
+        as.factor() %>%
+        as.numeric() %>%
+        as.factor() # making consecutive numeric factor
+    )
+})
+datanames <- c("ADSL", "ADQS")
+datanames(data) <- datanames
+join_keys(data) <- default_cdisc_join_keys[datanames]
+
+arm_ref_comp <- list(
+  ARMCD = list(
+    ref = "ARM A",
+    comp = c("ARM B", "ARM C")
+  )
+)
+
+## Reusable Configuration For Modules
+ADQS <- data[["ADQS"]]
+
+## Setup App
+app <- init(
+  data = data,
+  modules = modules(
+    tm_a_mmrm(
+      label = "MMRM",
+      dataname = "ADQS",
+      aval_var = choices_selected(c("AVAL", "CHG"), "AVAL"),
+      id_var = choices_selected(c("USUBJID", "SUBJID"), "USUBJID"),
+      arm_var = choices_selected(c("ARM", "ARMCD"), "ARMCD"),
+      visit_var = choices_selected(c("AVISIT", "AVISITN"), "AVISIT"),
+      arm_ref_comp = arm_ref_comp,
+      paramcd = choices_selected(
+        choices = value_choices(ADQS, "PARAMCD", "PARAM"),
+        selected = "FKSI-FWB"
+      ),
+      cov_var = choices_selected(c("BASE", "AGE", "SEX", "BASE:AVISIT"), NULL),
+      conf_level = choices_selected(c(0.95, 0.9, 0.8), 0.95)
+    )
+  )
+)
+
+shinyApp(app$ui, app$server)
+```
+
+{{< include ../../repro.qmd >}}
+
+::::

@@ -1,0 +1,153 @@
+---
+title: VST02
+subtitle: Vital Sign Abnormalities
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(dplyr)
+library(tern)
+
+adsl <- random.cdisc.data::cadsl
+advs <- random.cdisc.data::cadvs
+
+# Ensure character variables are converted to factors and empty strings
+# and NAs are explicit missing levels.
+adsl <- df_explicit_na(adsl)
+advs <- df_explicit_na(advs)
+
+# Note:  We keep only post-baseline for analysis.
+advs_f <- advs %>%
+  filter(ONTRTFL == "Y", ANRIND != "<Missing>") %>%
+  var_relabel(
+    PARAM = "Assessment",
+    ANRIND = "Abnormality"
+  )
+
+split_fun <- drop_split_levels
+```
+
+## VST02_1 -- Table of Abnormalities <br/> Regardless of Abnormality at Baseline
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant1, test = list(result_v1 = "result")}
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by(var = "ACTARM") %>%
+  add_overall_col("All Patients") %>%
+  split_rows_by("PARAM", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(advs_f$PARAM)) %>%
+  count_abnormal(
+    "ANRIND",
+    abnormal = list(Low = c("LOW", "LOW LOW"), High = c("HIGH", "HIGH HIGH")),
+    exclude_base_abn = FALSE
+  ) %>%
+  append_varlabels(advs_f, "ANRIND", indent = 1L)
+
+result <- build_table(lyt = lyt, df = advs_f, alt_counts_df = adsl)
+
+result
+```
+
+`r webr_code_labels <- c("setup", "variant1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## VST02_2 -- Table of Abnormalities Among <br/> Subjects Without Abnormality at Baseline
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant2, test = list(result_v2 = "result")}
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by(var = "ACTARM") %>%
+  add_overall_col("All Patients") %>%
+  split_rows_by("PARAM", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(advs_f$PARAM)) %>%
+  count_abnormal(
+    "ANRIND",
+    abnormal = list(Low = c("LOW", "LOW LOW"), High = c("HIGH", "HIGH HIGH")),
+    exclude_base_abn = TRUE
+  ) %>%
+  append_varlabels(advs_f, "ANRIND", indent = 1L)
+
+result <- build_table(lyt = lyt, df = advs_f, alt_counts_df = adsl)
+
+result
+```
+
+`r webr_code_labels <- c("setup", "variant2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+::: {.panel-tabset .nav-justified}
+## {{< fa regular file-lines fa-sm fa-fw >}} Preview
+
+```{r teal, opts.label = c("skip_if_testing", "app")}
+library(teal.modules.clinical)
+
+## Data reproducible code
+data <- teal_data()
+data <- within(data, {
+  library(dplyr)
+
+  ADSL <- random.cdisc.data::cadsl
+  ADVS <- random.cdisc.data::cadvs %>%
+    mutate(ONTRTFL = ifelse(AVISIT %in% c("SCREENING", "BASELINE"), "", "Y")) %>%
+    col_relabel(ONTRTFL = "On Treatment Record Flag")
+})
+datanames <- c("ADSL", "ADVS")
+datanames(data) <- datanames
+join_keys(data) <- default_cdisc_join_keys[datanames]
+
+## Reusable Configuration For Modules
+ADSL <- data[["ADSL"]]
+ADVS <- data[["ADVS"]]
+
+## Setup App
+app <- init(
+  data = data,
+  modules = modules(
+    tm_t_abnormality(
+      label = "Abnormality Table",
+      dataname = "ADVS",
+      arm_var = choices_selected(
+        choices = variable_choices(ADSL, subset = c("ARM", "ARMCD")),
+        selected = "ARM"
+      ),
+      by_vars = choices_selected(
+        choices = variable_choices(ADVS, subset = c("VSCAT", "PARAM", "AVISIT")),
+        selected = c("PARAM"),
+        keep_order = TRUE
+      ),
+      grade = choices_selected(
+        choices = variable_choices(ADVS, subset = "ANRIND"),
+        selected = "ANRIND",
+        fixed = TRUE
+      ),
+      abnormal = list(Low = c("LOW", "LOW LOW"), High = c("HIGH", "HIGH HIGH")),
+      exclude_base_abn = FALSE
+    )
+  )
+)
+
+shinyApp(app$ui, app$server)
+```
+
+{{< include ../../_utils/shinylive.qmd >}}
+:::
+
+{{< include ../../repro.qmd >}}
+
+::::

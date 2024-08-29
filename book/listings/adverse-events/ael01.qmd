@@ -1,0 +1,57 @@
+---
+title: AEL01
+subtitle: Listing of Preferred Terms, Lowest Level Terms, and Investigator-Specified Adverse Event Terms
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(dplyr)
+library(rlistings)
+
+adae <- random.cdisc.data::cadae
+
+out <- adae %>%
+  select(AESOC, AEDECOD, AELLT, AETERM) %>%
+  unique()
+
+var_labels(out) <- c(
+  AESOC = "MedDRA System Organ Class",
+  AEDECOD = "MedDRA Preferred Term",
+  AELLT = "MedDRA Lowest Level Term",
+  AETERM = "Investigator-Specified\nAdverse Event Term"
+)
+```
+
+## Standard Listing
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r lsting, test = list(lsting = "lsting")}
+lsting <- as_listing(
+  out,
+  key_cols = c("AESOC", "AEDECOD", "AELLT"),
+  disp_cols = names(out),
+  main_title = "Listing of Preferred Terms, Lowest Level Terms, and Investigator-Specified Adverse Event Terms"
+)
+
+head(lsting, 20)
+```
+
+`r webr_code_labels <- c("setup", "lsting")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+{{< include ../../repro.qmd >}}
+
+::::

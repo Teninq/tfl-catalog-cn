@@ -1,0 +1,237 @@
+---
+title: ENTXX
+subtitle: Enrollment Variants
+---
+
+------------------------------------------------------------------------
+
+{{< include ../../_utils/envir_hook.qmd >}}
+
+:::: {.panel-tabset}
+## Data Setup
+
+```{r setup, message = FALSE}
+#| code-fold: show
+
+library(dplyr)
+library(forcats)
+library(tern)
+
+adsl <- random.cdisc.data::cadsl
+
+# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+adsl <- df_explicit_na(adsl)
+
+adsl <- adsl %>%
+  mutate(
+    REGION1 = droplevels(REGION1),
+    COUNTRY = droplevels(COUNTRY),
+    INVID_INVNAM = paste(INVID, INVNAM, sep = " / ")
+  ) %>%
+  mutate(
+    INVID = factor(INVID),
+    SITEID = factor(SITEID),
+    INVNAM = factor(INVNAM),
+    INVID_INVNAM = factor(INVID_INVNAM)
+  ) %>%
+  var_relabel(
+    INVID_INVNAM = "Investigator Number/Name",
+    REGION1 = "Geographic Region 1",
+    COUNTRY = "Country",
+    INVID = "Investigator Identifier"
+  ) %>%
+  arrange(REGION1, COUNTRY, INVID)
+```
+
+## ENT01 -- Enrollment by Region, <br/> Country, and Investigator Number
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant1, test = list(result_v1 = "result")}
+# Define the split function
+split_fun <- drop_split_levels
+
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by("ARM") %>%
+  add_overall_col(label = "All Patients") %>%
+  split_rows_by("REGION1", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(adsl$REGION1)) %>%
+  summarize_row_groups() %>%
+  split_rows_by("COUNTRY", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(adsl$COUNTRY)) %>%
+  summarize_row_groups() %>%
+  analyze_vars("INVID", .stats = "count_fraction") %>%
+  append_varlabels(adsl, "INVID", 2L)
+
+result <- build_table(lyt, adsl) %>%
+  prune_table()
+
+result
+```
+
+`r webr_code_labels <- c("setup", "variant1")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## ENT01A -- Enrollment by Country <br/> and Investigator Number
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant2, test = list(result_v2 = "result")}
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by("ARM") %>%
+  add_overall_col(label = "All Patients") %>%
+  split_rows_by("COUNTRY", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(adsl$COUNTRY)) %>%
+  summarize_row_groups() %>%
+  analyze_vars("INVID", .stats = "count_fraction") %>%
+  append_varlabels(adsl, "INVID", 1L)
+
+result <- build_table(lyt, adsl) %>%
+  prune_table()
+
+result
+```
+
+`r webr_code_labels <- c("setup", "variant2")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## ENT02 -- Enrollment by Region, Country, <br/> and Investigator Number/Name
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant3, test = list(result_v3 = "result")}
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by("ARM") %>%
+  add_overall_col(label = "All Patients") %>%
+  split_rows_by("REGION1", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(adsl$REGION1)) %>%
+  summarize_row_groups() %>%
+  split_rows_by("COUNTRY", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(adsl$COUNTRY)) %>%
+  summarize_row_groups() %>%
+  analyze_vars("INVID_INVNAM", .stats = "count_fraction") %>%
+  append_varlabels(adsl, "INVID_INVNAM", 2L)
+
+result <- build_table(lyt, adsl) %>%
+  prune_table()
+
+result
+```
+
+`r webr_code_labels <- c("setup", "variant3")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+## ENT02A -- Enrollment by Country <br/> and Investigator Number/Name
+
+::: {.panel-tabset .nav-justified group="webr"}
+## {{< fa regular file-lines sm fw >}} Preview
+
+```{r variant4, test = list(result_v4 = "result")}
+lyt <- basic_table(show_colcounts = TRUE) %>%
+  split_cols_by("ARM") %>%
+  add_overall_col(label = "All Patients") %>%
+  split_rows_by("COUNTRY", split_fun = split_fun, label_pos = "topleft", split_label = obj_label(adsl$COUNTRY)) %>%
+  summarize_row_groups() %>%
+  analyze_vars("INVID_INVNAM", .stats = "count_fraction") %>%
+  append_varlabels(adsl, "INVID_INVNAM", 1L)
+
+result <- build_table(lyt, adsl) %>%
+  prune_table()
+
+result
+```
+
+`r webr_code_labels <- c("setup", "variant4")`
+{{< include ../../_utils/webr.qmd >}}
+:::
+
+{{< include ../../_utils/save_results.qmd >}}
+
+## `teal` App
+
+::: {.panel-tabset .nav-justified}
+## {{< fa regular file-lines fa-sm fa-fw >}} Preview
+
+Note that for this module application, only the variables passed into `by_vars` are used when `row_groups` is selected.
+Variables passed into `analyze_vars` are additionally used when `row_groups` is deselected.
+
+<!-- skip eval because of https://github.com/insightsengineering/teal.modules.clinical/pull/1083 -->
+
+```{r teal, opts.label = c("skip_if_testing", "app"), eval = packageVersion("teal.modules.clinical") >= "0.9.0.9003"}
+library(teal.modules.clinical)
+
+## Data reproducible code
+data <- teal_data()
+data <- within(data, {
+  library(dplyr)
+
+  ADSL <- random.cdisc.data::cadsl
+
+  # Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.
+  ADSL <- df_explicit_na(ADSL)
+
+  adsl_labels <- col_labels(ADSL)
+
+  ADSL <- ADSL %>%
+    mutate(
+      REGION1 = droplevels(REGION1),
+      COUNTRY = droplevels(COUNTRY),
+      INVID_INVNAM = paste(INVID, INVNAM, sep = " / ")
+    ) %>%
+    arrange(REGION1, COUNTRY, INVID) %>%
+    mutate(
+      INVID = factor(INVID),
+      SITEID = factor(SITEID),
+      INVNAM = factor(INVNAM),
+      INVID_INVNAM = factor(INVID_INVNAM)
+    )
+
+  col_labels(ADSL) <- c(adsl_labels, c(INVID_INVNAM = "Investigator Number/Name"))
+})
+datanames <- "ADSL"
+datanames(data) <- datanames
+join_keys(data) <- default_cdisc_join_keys[datanames]
+
+## Reusable Configuration For Modules
+ADSL <- data[["ADSL"]]
+
+## Setup App
+app <- init(
+  data = data,
+  modules = modules(
+    tm_t_summary_by(
+      label = "Enrollment Table",
+      dataname = "ADSL",
+      arm_var = choices_selected(
+        choices = variable_choices(ADSL, c("ARM", "ARMCD")),
+        selected = "ARM"
+      ),
+      by_vars = choices_selected(
+        choices = variable_choices(ADSL, c("REGION1", "COUNTRY", "SITEID", "INVID", "INVNAM", "INVID_INVNAM")),
+        selected = c("REGION1")
+      ),
+      summarize_vars = choices_selected(
+        choices = variable_choices(ADSL, c("REGION1", "COUNTRY", "SITEID", "INVID", "INVNAM", "INVID_INVNAM")),
+        selected = c("SITEID")
+      ),
+      denominator = choices_selected(
+        choices = c("n", "N", "omit"),
+        selected = "N",
+        fixed = TRUE
+      ),
+      useNA = "ifany",
+      row_groups = TRUE
+    )
+  )
+)
+
+shinyApp(app$ui, app$server)
+```
+
+{{< include ../../_utils/shinylive.qmd >}}
+:::
+
+{{< include ../../repro.qmd >}}
+
+::::

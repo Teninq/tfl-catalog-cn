@@ -1,0 +1,266 @@
+---
+name: Publish Catalog 📰
+
+on:
+  workflow_call:
+    secrets:
+      REPO_GITHUB_TOKEN:
+        description: |
+          Github token with write access to the repository
+        required: false
+      GCHAT_WEBHOOK:
+        description: |
+          Google Chat webhook to send failure notifications
+        required: false
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "17 17 * * 3,6"
+
+jobs:
+  cache-refresh:
+    name: Refresh Cache ♽
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Refresh Cache ♽
+        run: |
+          gh extension install actions/gh-actions-cache
+          echo "Fetching list of cache keys..."
+          cacheKeysForPR=$(gh actions-cache list -R $REPO -B $BRANCH -L 100 | cut -f 1 )
+          ## Setting this to not fail the workflow while deleting cache keys.
+          set +e
+          echo "Deleting caches..."
+          for cacheKey in $cacheKeysForPR
+          do {
+            gh actions-cache delete $cacheKey -R $REPO -B $BRANCH --confirm
+          }
+          done
+          echo "Cache refresh completed."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+
+  publish-dev:
+    name: Build & Deploy TLGC (dev) 📖
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/insightsengineering/rstudio:latest
+    needs: cache-refresh
+    if: ${{ always() }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo 🛎
+        uses: actions/checkout@v4.1.1
+
+      - name: Cache artifacts 📀
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/package/.staged.dependencies
+            book/_freeze
+          key: ${{ runner.os }}-tlg-catalog-dev
+
+      - name: Normalize variables 📏
+        run: |
+          echo "gchat_webhook=${{ secrets.GCHAT_WEBHOOK }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Run Staged dependencies 🎦
+        uses: insightsengineering/staged-dependencies-action@v1
+        env:
+          GITHUB_PAT: ${{ secrets.REPO_GITHUB_TOKEN }}
+        with:
+          path: "./package"
+          enable-check: false
+          direction: upstream
+
+      - name: Render catalog 🖨
+        run: |
+          quarto render --profile development
+        shell: bash
+        working-directory: book
+
+      - name: Create artifact 📂
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          zip -r9 ../../site.zip *
+        shell: bash
+        working-directory: book/_site
+
+      - name: Upload docs ⬆
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-development
+          path: site.zip
+        
+      - name: Remove large WebR assets 🧹
+        run: |
+          packages_path <- sprintf("./book/_site/site_libs/quarto-contrib/shinylive-%s/shinylive/webr/packages", shinylive::assets_version())
+
+          # remove the dirs with size > 100 MB
+          for (x in list.dirs(packages_path)) {
+            x_files <- file.info(list.files(x, full.names = TRUE))
+            if (any(x_files$size > 100 * 1024^2)) {
+              print(x)
+              print(x_files)
+              unlink(x, recursive = TRUE)
+            }
+          }
+          
+          # refresh the `metadata.rds` file
+          metadata_path <- file.path(packages_path, "metadata.rds")
+          metadata <- readRDS(metadata_path)
+          new_metadata <- metadata[intersect(names(metadata), list.dirs(packages_path, full.names = FALSE))]
+          saveRDS(new_metadata, metadata_path)        
+        shell: Rscript {0}
+
+      - name: Publish docs 📔
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./book/_site
+          destination_dir: development
+
+      - name: GChat notification 🔔
+        if: (failure() || cancelled()) && env.gchat_webhook != ''
+        uses: insightsengineering/google-chat-notification@master
+        with:
+          name: ${{ github.event.repository.name }} - development
+          url: ${{ secrets.GCHAT_WEBHOOK }}
+          status: ${{ job.status }}
+
+  publish-stable:
+    name: Build & Deploy TLGC (stable) 📖
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/insightsengineering/rstudio:latest
+    permissions:
+      contents: write
+    needs:
+      - cache-refresh
+    if: ${{ always() }}
+    steps:
+      - name: Checkout repo 🛎
+        uses: actions/checkout@v4.1.1
+
+      - name: Cache artifacts 📀
+        uses: actions/cache@v4
+        with:
+          path: |
+            book/_freeze
+          key: ${{ runner.os }}-tlg-catalog-stable
+
+      - name: Normalize variables 📏
+        run: |
+          echo "gchat_webhook=${{ secrets.GCHAT_WEBHOOK }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Install packages 🎦
+        run: |
+          devtools::install_dev_deps(".", repos = c("https://insightsengineering.r-universe.dev/", "https://cloud.r-project.org/"))
+        shell: Rscript {0}
+        working-directory: package
+
+      - name: Render catalog 🖨
+        run: |
+          quarto render --profile stable
+        shell: bash
+        working-directory: book
+
+      - name: Create artifact 📂
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          zip -r9 ../../site.zip *
+        shell: bash
+        working-directory: book/_site
+        
+      - name: Remove large WebR assets 🧹
+        run: |
+          packages_path <- sprintf("./book/_site/site_libs/quarto-contrib/shinylive-%s/shinylive/webr/packages", shinylive::assets_version())
+
+          # remove the dirs with size > 100 MB
+          for (x in list.dirs(packages_path)) {
+            x_files <- file.info(list.files(x, full.names = TRUE))
+            if (any(x_files$size > 100 * 1024^2)) {
+              print(x)
+              print(x_files)
+              unlink(x, recursive = TRUE)
+            }
+          }
+          
+          # refresh the `metadata.rds` file
+          metadata_path <- file.path(packages_path, "metadata.rds")
+          metadata <- readRDS(metadata_path)
+          new_metadata <- metadata[intersect(names(metadata), list.dirs(packages_path, full.names = FALSE))]
+          saveRDS(new_metadata, metadata_path)        
+        shell: Rscript {0}
+
+
+      - name: Upload docs ⬆
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-stable
+          path: site.zip
+
+      - name: Publish docs 📔
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./book/_site
+          destination_dir: stable
+
+      - name: GChat notification 🔔
+        if: (failure() || cancelled()) && env.gchat_webhook != ''
+        uses: insightsengineering/google-chat-notification@master
+        with:
+          name: ${{ github.event.repository.name }} - stable
+          url: ${{ secrets.GCHAT_WEBHOOK }}
+          status: ${{ job.status }}
+
+  upload-release-assets:
+    name: Upload assets 🔼
+    needs: [publish-dev, publish-stable]
+    runs-on: ubuntu-latest
+    if: >
+      startsWith(github.ref, 'refs/tags/v')
+        && !contains(github.event.commits[0].message, '[skip docs]')
+    steps:
+      - name: Checkout repo 🛎
+        uses: actions/checkout@v4.1.1
+
+      - name: Download artifact ⏬
+        uses: actions/download-artifact@v4
+        with:
+          name: site-development
+          path: site-development
+
+      - name: Download artifact ⏬
+        uses: actions/download-artifact@v4
+        with:
+          name: site-stable
+          path: site-stable
+
+      - name: Upload binaries to release ⤴
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: site-development/site.zip
+          asset_name: catalog-development.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+
+      - name: Upload binaries to release ⤴
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: site-stable/site.zip
+          asset_name: catalog-stable.zip
+          tag: ${{ github.ref }}
+          overwrite: true
