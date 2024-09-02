@@ -17,7 +17,7 @@ jobs:
       GCHAT_WEBHOOK: ${{ secrets.GCHAT_WEBHOOK }}
   release:
     name: Create release 🎉
-    uses: insightsengineering/r.pkg.template/.github/workflows/release.yaml@main
+    uses: teninq/r.pkg.template/.github/workflows/release.yaml@main
     with:
       package-subdirectory: package
     permissions:
