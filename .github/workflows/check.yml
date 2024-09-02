@@ -20,19 +20,19 @@ jobs:
     if: github.event_name != 'push'
     name: Audit Dependencies 🕵️‍♂️
     uses: insightsengineering/r.pkg.template/.github/workflows/audit.yaml@main
-  r-cmd:
-    if: github.event_name != 'push'
-    name: R CMD Check (development) 🧬
-    uses: insightsengineering/r.pkg.template/.github/workflows/build-check-install.yaml@main
-    secrets:
-      REPO_GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
-    with:
-      install-deps-from-package-repositories: "R-universe=https://pharmaverse.r-universe.dev/,CRAN=https://cloud.r-project.org/"
-      package-subdirectory: package
-      additional-env-vars: |
-        NOT_CRAN=true
-        QUARTO_PROFILE=development
-      concurrency-group: development
+  # r-cmd:
+  #   if: github.event_name != 'push'
+  #   name: R CMD Check (development) 🧬
+  #   uses: insightsengineering/r.pkg.template/.github/workflows/build-check-install.yaml@main
+  #   secrets:
+  #     REPO_GITHUB_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
+  #   with:
+  #     install-deps-from-package-repositories: "R-universe=https://pharmaverse.r-universe.dev/,CRAN=https://cloud.r-project.org/"
+  #     package-subdirectory: package
+  #     additional-env-vars: |
+  #       NOT_CRAN=true
+  #       QUARTO_PROFILE=development
+  #     concurrency-group: development
   r-cmd-stable:
     if: github.event_name != 'push'
     name: R CMD Check (stable) 🧬
