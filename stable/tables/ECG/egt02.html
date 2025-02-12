@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>EGT02 – TLG Catalog - Stable</title>
 <style>
@@ -69,12 +69,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-f8dc6eab18fde03278982b0b35885446.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-19bf16c84c08f9129ec8e2b896fc8425.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-66d0971a68dc17edefb7f3a6f122fe41.min.css" rel="prefetch" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <meta name="shinylive:serviceworker_dir" content="../..">
 <script src="../../site_libs/quarto-contrib/shinylive-0.9.1/shinylive/load-shinylive-sw.js" type="module"></script>
 <script src="../../site_libs/quarto-contrib/shinylive-0.9.1/shinylive/run-python-blocks.js" type="module"></script>
@@ -337,7 +337,7 @@ globalThis.qwebrCustomizedWebROptions = {
 };
 
 // Store cell data
-globalThis.qwebrCellDetails = [{"id":1,"code":"library(dplyr)\nlibrary(tern)\n\nadsl <- random.cdisc.data::cadsl\nadeg <- random.cdisc.data::cadeg\n\n# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.\nadsl <- df_explicit_na(adsl)\nadeg <- df_explicit_na(adeg)\n\n# Note:  We keep only post-baseline for analysis.\nadeg_f <- adeg %>%\n  filter(ONTRTFL == \"Y\") %>%\n  filter(PARAM %in% c(\"Heart Rate\", \"QT Duration\", \"RR Duration\")) %>%\n  filter(ANRIND != \"<Missing>\") %>%\n  var_relabel(\n    PARAM = \"Assessment\",\n    ANRIND = \"Abnormality\"\n  )\nsplit_fun <- drop_split_levels\n\nlyt <- basic_table(show_colcounts = TRUE) %>%\n  split_cols_by(var = \"ACTARM\") %>%\n  split_rows_by(\n    \"PARAM\",\n    split_fun = split_fun,\n    label_pos = \"topleft\",\n    split_label = obj_label(adeg_f$PARAM)\n  ) %>%\n  count_abnormal(\"ANRIND\", abnormal = list(Low = \"LOW\", High = \"HIGH\"), exclude_base_abn = FALSE) %>%\n  append_varlabels(adeg_f, \"ANRIND\", indent = 1L)\n\nresult <- build_table(lyt = lyt, df = adeg_f, alt_counts_df = adsl)\nresult","options":{"message":"true","label":"unnamed-chunk-1","editor-max-height":"500","fig-width":7,"read-only":"false","context":"interactive","results":"markup","editor-quick-suggestions":"false","comment":"","dpi":72,"out-width":"700px","fig-height":5,"fig-cap":"","warning":"true","output":"true","editor-font-scale":1,"classes":"","out-height":"","autorun":"true"}},{"id":2,"code":"library(dplyr)\nlibrary(tern)\n\nadsl <- random.cdisc.data::cadsl\nadeg <- random.cdisc.data::cadeg\n\n# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.\nadsl <- df_explicit_na(adsl)\nadeg <- df_explicit_na(adeg)\n\n# Note:  We keep only post-baseline for analysis.\nadeg_f <- adeg %>%\n  filter(ONTRTFL == \"Y\") %>%\n  filter(PARAM %in% c(\"Heart Rate\", \"QT Duration\", \"RR Duration\")) %>%\n  filter(ANRIND != \"<Missing>\") %>%\n  var_relabel(\n    PARAM = \"Assessment\",\n    ANRIND = \"Abnormality\"\n  )\nsplit_fun <- drop_split_levels\n\nlyt <- basic_table(show_colcounts = TRUE) %>%\n  split_cols_by(var = \"ACTARM\") %>%\n  split_rows_by(\n    \"PARAM\",\n    split_fun = split_fun,\n    label_pos = \"topleft\",\n    split_label = obj_label(adeg_f$PARAM)\n  ) %>%\n  count_abnormal(\"ANRIND\", abnormal = list(Low = \"LOW\", High = \"HIGH\"), exclude_base_abn = TRUE) %>%\n  append_varlabels(adeg_f, \"ANRIND\", indent = 1L)\n\nresult <- build_table(lyt = lyt, df = adeg_f, alt_counts_df = adsl)\nresult","options":{"message":"true","label":"unnamed-chunk-2","editor-max-height":"500","fig-width":7,"read-only":"false","context":"interactive","results":"markup","editor-quick-suggestions":"false","comment":"","dpi":72,"out-width":"700px","fig-height":5,"fig-cap":"","warning":"true","output":"true","editor-font-scale":1,"classes":"","out-height":"","autorun":"true"}}];
+globalThis.qwebrCellDetails = [{"code":"library(dplyr)\nlibrary(tern)\n\nadsl <- random.cdisc.data::cadsl\nadeg <- random.cdisc.data::cadeg\n\n# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.\nadsl <- df_explicit_na(adsl)\nadeg <- df_explicit_na(adeg)\n\n# Note:  We keep only post-baseline for analysis.\nadeg_f <- adeg %>%\n  filter(ONTRTFL == \"Y\") %>%\n  filter(PARAM %in% c(\"Heart Rate\", \"QT Duration\", \"RR Duration\")) %>%\n  filter(ANRIND != \"<Missing>\") %>%\n  var_relabel(\n    PARAM = \"Assessment\",\n    ANRIND = \"Abnormality\"\n  )\nsplit_fun <- drop_split_levels\n\nlyt <- basic_table(show_colcounts = TRUE) %>%\n  split_cols_by(var = \"ACTARM\") %>%\n  split_rows_by(\n    \"PARAM\",\n    split_fun = split_fun,\n    label_pos = \"topleft\",\n    split_label = obj_label(adeg_f$PARAM)\n  ) %>%\n  count_abnormal(\"ANRIND\", abnormal = list(Low = \"LOW\", High = \"HIGH\"), exclude_base_abn = FALSE) %>%\n  append_varlabels(adeg_f, \"ANRIND\", indent = 1L)\n\nresult <- build_table(lyt = lyt, df = adeg_f, alt_counts_df = adsl)\nresult","id":1,"options":{"autorun":"true","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":1,"editor-max-height":"500","editor-quick-suggestions":"false","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-1","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"library(dplyr)\nlibrary(tern)\n\nadsl <- random.cdisc.data::cadsl\nadeg <- random.cdisc.data::cadeg\n\n# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.\nadsl <- df_explicit_na(adsl)\nadeg <- df_explicit_na(adeg)\n\n# Note:  We keep only post-baseline for analysis.\nadeg_f <- adeg %>%\n  filter(ONTRTFL == \"Y\") %>%\n  filter(PARAM %in% c(\"Heart Rate\", \"QT Duration\", \"RR Duration\")) %>%\n  filter(ANRIND != \"<Missing>\") %>%\n  var_relabel(\n    PARAM = \"Assessment\",\n    ANRIND = \"Abnormality\"\n  )\nsplit_fun <- drop_split_levels\n\nlyt <- basic_table(show_colcounts = TRUE) %>%\n  split_cols_by(var = \"ACTARM\") %>%\n  split_rows_by(\n    \"PARAM\",\n    split_fun = split_fun,\n    label_pos = \"topleft\",\n    split_label = obj_label(adeg_f$PARAM)\n  ) %>%\n  count_abnormal(\"ANRIND\", abnormal = list(Low = \"LOW\", High = \"HIGH\"), exclude_base_abn = TRUE) %>%\n  append_varlabels(adeg_f, \"ANRIND\", indent = 1L)\n\nresult <- build_table(lyt = lyt, df = adeg_f, alt_counts_df = adsl)\nresult","id":2,"options":{"autorun":"true","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":1,"editor-max-height":"500","editor-quick-suggestions":"false","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-2","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}}];
 
 </script><script type="module">
 // Declare startupMessageQWebR globally
@@ -1088,8 +1088,10 @@ globalThis.qwebrExecuteCode = async function (
 </script><link rel="stylesheet" href="../../assets/css/style.css">
 <meta property="og:title" content="EGT02 – TLG Catalog - Stable">
 <meta property="og:description" content="ECG Abnormalities (EGT02_1 &amp; EGT02_2)">
-<meta property="og:image" content="https://insightsengineering.github.io/tlg-catalog/tables/ECG/assets/img/logo.png">
+<meta property="og:image" content="https://insightsengineering.github.io/tlg-catalog/tables/ECG/egt02_files/figure-html/teal-1.png">
 <meta property="og:site_name" content="TLG Catalog - Stable">
+<meta property="og:image:height" content="1030">
+<meta property="og:image:width" content="1425">
 </head>
 <body class="nav-sidebar docked nav-fixed">
 
@@ -3277,8 +3279,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -3440,7 +3440,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {

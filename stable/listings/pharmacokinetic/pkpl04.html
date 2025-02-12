@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>PKPL04 – TLG Catalog - Stable</title>
 <style>
@@ -69,12 +69,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-f8dc6eab18fde03278982b0b35885446.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-19bf16c84c08f9129ec8e2b896fc8425.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-66d0971a68dc17edefb7f3a6f122fe41.min.css" rel="prefetch" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <link href="../../site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
 <link href="../../site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet"><script id="quarto-search-options" type="application/json">{
   "location": "navbar",
@@ -332,7 +332,7 @@ globalThis.qwebrCustomizedWebROptions = {
 };
 
 // Store cell data
-globalThis.qwebrCellDetails = [{"id":1,"code":"library(dplyr)\nlibrary(rlistings)\n\nadpp <- random.cdisc.data::cadpp\n\nvisit <- \"CYCLE 1 DAY 1\"\ndrug_a <- \"Plasma Drug X\" # numerator drug\ndrug_b <- \"Plasma Drug Y\" # denominator drug\n\nadpp_x <- adpp %>%\n  filter(\n    AVISIT == visit,\n    PPCAT %in% c(drug_a, drug_b),\n    PARAMCD %in% c(\"CMAX\", \"AUCIFO\")\n  ) %>%\n  mutate(\n    PARAM_U = paste0(PARAM, \" (\", AVALU, \")\")\n  )\n\nadpp_ratio <- adpp_x %>%\n  tidyr::pivot_wider(\n    id_cols = c(USUBJID, PARAM_U),\n    names_from = PPCAT,\n    values_from = AVAL\n  )\n\nadpp_ratio[, paste0(drug_a, \"/\", drug_b)] <- as.numeric(unlist(adpp_ratio[, drug_a] / adpp_ratio[, drug_b]))\n\nout <- adpp_ratio %>%\n  tidyr::pivot_wider(\n    id_cols = USUBJID,\n    names_from = PARAM_U,\n    names_glue = \"{PARAM_U}\\n{.value}\",\n    values_from = c(all_of(drug_a), all_of(drug_b), paste0(drug_a, \"/\", drug_b))\n  ) %>%\n  select(names(.)[c(1:2, 4, 6, 3, 5, 7)])\n\nvar_labels(out) <- names(out)\nout <- out %>% var_relabel(USUBJID = \"Subject ID\")\nlsting <- as_listing(\n  out,\n  key_cols = \"USUBJID\",\n  disp_cols = names(out),\n  main_title = paste0(\n    \"Listing of Individual \", drug_a, \" \", paste(unique(adpp_x$PARAM), collapse = \" and \"), \" Ratios following \",\n    unique(adpp_x$REGIMEN), \" \", paste(drug_a, drug_b, sep = \" or \"), \", PK Population\\nProtocol: xxnnnnn\",\n    \"\\nVisit: \", unique(adpp_x$AVISIT)\n  ),\n  subtitles = paste0(\"\\nAnalytes: \", paste(drug_a, drug_b, sep = \" and \"))\n)\n\nhead(lsting, 20)","options":{"results":"markup","comment":"","classes":"","message":"true","warning":"true","dpi":72,"fig-width":7,"out-height":"","read-only":"false","editor-quick-suggestions":"false","output":"true","fig-cap":"","editor-max-height":"500","autorun":"true","out-width":"700px","context":"interactive","label":"unnamed-chunk-1","fig-height":5,"editor-font-scale":1}}];
+globalThis.qwebrCellDetails = [{"code":"library(dplyr)\nlibrary(rlistings)\n\nadpp <- random.cdisc.data::cadpp\n\nvisit <- \"CYCLE 1 DAY 1\"\ndrug_a <- \"Plasma Drug X\" # numerator drug\ndrug_b <- \"Plasma Drug Y\" # denominator drug\n\nadpp_x <- adpp %>%\n  filter(\n    AVISIT == visit,\n    PPCAT %in% c(drug_a, drug_b),\n    PARAMCD %in% c(\"CMAX\", \"AUCIFO\")\n  ) %>%\n  mutate(\n    PARAM_U = paste0(PARAM, \" (\", AVALU, \")\")\n  )\n\nadpp_ratio <- adpp_x %>%\n  tidyr::pivot_wider(\n    id_cols = c(USUBJID, PARAM_U),\n    names_from = PPCAT,\n    values_from = AVAL\n  )\n\nadpp_ratio[, paste0(drug_a, \"/\", drug_b)] <- as.numeric(unlist(adpp_ratio[, drug_a] / adpp_ratio[, drug_b]))\n\nout <- adpp_ratio %>%\n  tidyr::pivot_wider(\n    id_cols = USUBJID,\n    names_from = PARAM_U,\n    names_glue = \"{PARAM_U}\\n{.value}\",\n    values_from = c(all_of(drug_a), all_of(drug_b), paste0(drug_a, \"/\", drug_b))\n  ) %>%\n  select(names(.)[c(1:2, 4, 6, 3, 5, 7)])\n\nvar_labels(out) <- names(out)\nout <- out %>% var_relabel(USUBJID = \"Subject ID\")\nlsting <- as_listing(\n  out,\n  key_cols = \"USUBJID\",\n  disp_cols = names(out),\n  main_title = paste0(\n    \"Listing of Individual \", drug_a, \" \", paste(unique(adpp_x$PARAM), collapse = \" and \"), \" Ratios following \",\n    unique(adpp_x$REGIMEN), \" \", paste(drug_a, drug_b, sep = \" or \"), \", PK Population\\nProtocol: xxnnnnn\",\n    \"\\nVisit: \", unique(adpp_x$AVISIT)\n  ),\n  subtitles = paste0(\"\\nAnalytes: \", paste(drug_a, drug_b, sep = \" and \"))\n)\n\nhead(lsting, 20)","id":1,"options":{"autorun":"true","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":1,"editor-max-height":"500","editor-quick-suggestions":"false","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-1","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}}];
 
 </script><script type="module">
 // Declare startupMessageQWebR globally
@@ -3068,8 +3068,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -3231,7 +3229,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {

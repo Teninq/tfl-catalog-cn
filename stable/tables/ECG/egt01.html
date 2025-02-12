@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>EGT01 – TLG Catalog - Stable</title>
 <style>
@@ -69,12 +69,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-f8dc6eab18fde03278982b0b35885446.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-19bf16c84c08f9129ec8e2b896fc8425.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-66d0971a68dc17edefb7f3a6f122fe41.min.css" rel="prefetch" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <meta name="shinylive:serviceworker_dir" content="../..">
 <script src="../../site_libs/quarto-contrib/shinylive-0.9.1/shinylive/load-shinylive-sw.js" type="module"></script>
 <script src="../../site_libs/quarto-contrib/shinylive-0.9.1/shinylive/run-python-blocks.js" type="module"></script>
@@ -337,7 +337,7 @@ globalThis.qwebrCustomizedWebROptions = {
 };
 
 // Store cell data
-globalThis.qwebrCellDetails = [{"id":1,"options":{"fig-width":7,"label":"unnamed-chunk-1","results":"markup","autorun":"true","out-height":"","output":"true","editor-font-scale":1,"comment":"","dpi":72,"context":"interactive","out-width":"700px","editor-max-height":"500","classes":"","fig-cap":"","read-only":"false","message":"true","fig-height":5,"warning":"true","editor-quick-suggestions":"false"},"code":"library(dplyr)\nlibrary(tern)\n\n# Data should be filtered for the studied Parameter (`PARAM`) and the\n# Analysis Visit (`AVISIT`). According to the GDSR template, the values for\n# the `AVISIT` reported in the EGT01 standard may be:\n# 'POST-BASELINE MAXIMUM', 'POST-BASELINE MINIMUM', 'POST-BASELINE LAST'.\n\nadsl <- random.cdisc.data::cadsl\nadeg <- random.cdisc.data::cadeg\n\n# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.\nadsl <- df_explicit_na(adsl)\nadeg <- df_explicit_na(adeg)\n\nadeg_f <- adeg %>%\n  filter(ANL01FL == \"Y\") %>%\n  filter(PARAM %in% c(\"Heart Rate\", \"QT Duration\", \"RR Duration\"))\n# Define the split function\nsplit_fun <- drop_split_levels\n\nafun <- function(x, .var, .spl_context, ...) {\n  n_fun <- sum(!is.na(x), na.rm = TRUE)\n  if (n_fun == 0) {\n    mean_sd_fun <- c(NA, NA)\n    median_fun <- NA\n    min_max_fun <- c(NA, NA)\n  } else {\n    mean_sd_fun <- c(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE))\n    median_fun <- median(x, na.rm = TRUE)\n    min_max_fun <- c(min(x), max(x))\n  }\n  is_chg <- .var == \"CHG\"\n  is_baseline <- .spl_context$value[which(.spl_context$split == \"AVISIT\")] == \"BASELINE\"\n  if (is_baseline && is_chg) n_fun <- mean_sd_fun <- median_fun <- min_max_fun <- NULL\n\n  in_rows(\n    \"n\" = n_fun,\n    \"Mean (SD)\" = mean_sd_fun,\n    \"Median\" = median_fun,\n    \"Min - Max\" = min_max_fun,\n    .formats = list(\"n\" = \"xx\", \"Mean (SD)\" = \"xx.xx (xx.xx)\", \"Median\" = \"xx.xx\", \"Min - Max\" = \"xx.xx - xx.xx\"),\n    .format_na_strs = list(\"n\" = \"NE\", \"Mean (SD)\" = \"NE (NE)\", \"Median\" = \"NE\", \"Min - Max\" = \"NE - NE\")\n  )\n}\n\nlyt <- basic_table(show_colcounts = TRUE) %>%\n  split_cols_by(\"ACTARM\") %>%\n  split_rows_by(\"PARAM\", split_fun = split_fun, label_pos = \"topleft\", split_label = obj_label(adeg_f$PARAM)) %>%\n  split_rows_by(\"AVISIT\", split_fun = split_fun, label_pos = \"topleft\", split_label = obj_label(adeg_f$AVISIT)) %>%\n  split_cols_by_multivar(\n    vars = c(\"AVAL\", \"CHG\"),\n    varlabels = c(\"Value at Visit\", \"Change from\\nBaseline\")\n  ) %>%\n  analyze_colvars(afun = afun)\n\nresult <- build_table(lyt, adeg_f, alt_counts_df = adsl)\nresult"}];
+globalThis.qwebrCellDetails = [{"code":"library(dplyr)\nlibrary(tern)\n\n# Data should be filtered for the studied Parameter (`PARAM`) and the\n# Analysis Visit (`AVISIT`). According to the GDSR template, the values for\n# the `AVISIT` reported in the EGT01 standard may be:\n# 'POST-BASELINE MAXIMUM', 'POST-BASELINE MINIMUM', 'POST-BASELINE LAST'.\n\nadsl <- random.cdisc.data::cadsl\nadeg <- random.cdisc.data::cadeg\n\n# Ensure character variables are converted to factors and empty strings and NAs are explicit missing levels.\nadsl <- df_explicit_na(adsl)\nadeg <- df_explicit_na(adeg)\n\nadeg_f <- adeg %>%\n  filter(ANL01FL == \"Y\") %>%\n  filter(PARAM %in% c(\"Heart Rate\", \"QT Duration\", \"RR Duration\"))\n# Define the split function\nsplit_fun <- drop_split_levels\n\nafun <- function(x, .var, .spl_context, ...) {\n  n_fun <- sum(!is.na(x), na.rm = TRUE)\n  if (n_fun == 0) {\n    mean_sd_fun <- c(NA, NA)\n    median_fun <- NA\n    min_max_fun <- c(NA, NA)\n  } else {\n    mean_sd_fun <- c(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE))\n    median_fun <- median(x, na.rm = TRUE)\n    min_max_fun <- c(min(x), max(x))\n  }\n  is_chg <- .var == \"CHG\"\n  is_baseline <- .spl_context$value[which(.spl_context$split == \"AVISIT\")] == \"BASELINE\"\n  if (is_baseline && is_chg) n_fun <- mean_sd_fun <- median_fun <- min_max_fun <- NULL\n\n  in_rows(\n    \"n\" = n_fun,\n    \"Mean (SD)\" = mean_sd_fun,\n    \"Median\" = median_fun,\n    \"Min - Max\" = min_max_fun,\n    .formats = list(\"n\" = \"xx\", \"Mean (SD)\" = \"xx.xx (xx.xx)\", \"Median\" = \"xx.xx\", \"Min - Max\" = \"xx.xx - xx.xx\"),\n    .format_na_strs = list(\"n\" = \"NE\", \"Mean (SD)\" = \"NE (NE)\", \"Median\" = \"NE\", \"Min - Max\" = \"NE - NE\")\n  )\n}\n\nlyt <- basic_table(show_colcounts = TRUE) %>%\n  split_cols_by(\"ACTARM\") %>%\n  split_rows_by(\"PARAM\", split_fun = split_fun, label_pos = \"topleft\", split_label = obj_label(adeg_f$PARAM)) %>%\n  split_rows_by(\"AVISIT\", split_fun = split_fun, label_pos = \"topleft\", split_label = obj_label(adeg_f$AVISIT)) %>%\n  split_cols_by_multivar(\n    vars = c(\"AVAL\", \"CHG\"),\n    varlabels = c(\"Value at Visit\", \"Change from\\nBaseline\")\n  ) %>%\n  analyze_colvars(afun = afun)\n\nresult <- build_table(lyt, adeg_f, alt_counts_df = adsl)\nresult","id":1,"options":{"autorun":"true","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":1,"editor-max-height":"500","editor-quick-suggestions":"false","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-1","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}}];
 
 </script><script type="module">
 // Declare startupMessageQWebR globally
@@ -1088,8 +1088,10 @@ globalThis.qwebrExecuteCode = async function (
 </script><link rel="stylesheet" href="../../assets/css/style.css">
 <meta property="og:title" content="EGT01 – TLG Catalog - Stable">
 <meta property="og:description" content="ECG Results and Change from Baseline by Visit">
-<meta property="og:image" content="https://insightsengineering.github.io/tlg-catalog/tables/ECG/assets/img/logo.png">
+<meta property="og:image" content="https://insightsengineering.github.io/tlg-catalog/tables/ECG/egt01_files/figure-html/teal-1.png">
 <meta property="og:site_name" content="TLG Catalog - Stable">
+<meta property="og:image:height" content="1866">
+<meta property="og:image:width" content="1425">
 </head>
 <body class="nav-sidebar docked nav-fixed">
 
@@ -3341,8 +3343,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -3504,7 +3504,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {

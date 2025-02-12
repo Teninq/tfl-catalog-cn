@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.40">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>PKCG01 – TLG Catalog - Stable</title>
 <style>
@@ -69,12 +69,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-86daaaaad7353f9cc0c554efc1dd6d94.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-f8dc6eab18fde03278982b0b35885446.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-19bf16c84c08f9129ec8e2b896fc8425.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-66d0971a68dc17edefb7f3a6f122fe41.min.css" rel="prefetch" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <link href="../../site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
 <link href="../../site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet"><script id="quarto-search-options" type="application/json">{
   "location": "navbar",
@@ -332,7 +332,7 @@ globalThis.qwebrCustomizedWebROptions = {
 };
 
 // Store cell data
-globalThis.qwebrCellDetails = [{"code":"library(tern)\nlibrary(dplyr)\nlibrary(ggplot2)\nlibrary(nestcolor)\n\nadpc <- random.cdisc.data::cadpc\nadpc_a <- adpc %>%\n  filter(\n    PARAM == \"Plasma Drug X\",\n    ARMCD == \"ARM A\"\n  ) %>%\n  mutate(Patient_ID = sub(\".*id-\", \"\", USUBJID))\n\nuse_title <- \"Plot of Plasma Drug X (ug/mL) Concentrations Over Time by\\nPatient: PK Evaluable Patients\"\nuse_subtitle <- \"Analyte: Plasma Drug X (ug/mL) \\nTreatment Group: ARM A\"\nuse_footnote <- \"Program: \\nOutput:\"\n\nresult <- g_ipp(\n  df = adpc_a,\n  xvar = \"NFRLT\",\n  yvar = \"AVAL\",\n  xlab = \"Norminal Time from First Dose (hr)\",\n  ylab = \"Concentration (ug/mL)\",\n  id_var = \"Patient_ID\",\n  add_baseline_hline = FALSE,\n  yvar_baseline = \"AVAL\", #  yvar_baseline cannot be NA or ignore\n  title = use_title,\n  subtitle = use_subtitle,\n  caption = use_footnote,\n  plotting_choices = \"separate_by_obs\"\n)\nplot <- result[[1]] # only show the first subject\nplot","id":1,"options":{"context":"interactive","classes":"","fig-cap":"","out-width":"700px","warning":"true","message":"true","read-only":"false","output":"true","results":"markup","autorun":"true","dpi":72,"label":"unnamed-chunk-1","out-height":"","fig-width":7,"comment":"","editor-quick-suggestions":"false","fig-height":5,"editor-font-scale":1,"editor-max-height":"500"}},{"code":"library(tern)\nlibrary(dplyr)\nlibrary(ggplot2)\nlibrary(nestcolor)\n\nadpc <- random.cdisc.data::cadpc\nadpc_a <- adpc %>%\n  filter(\n    PARAM == \"Plasma Drug X\",\n    ARMCD == \"ARM A\"\n  ) %>%\n  mutate(avalog = ifelse(AVAL != 0, AVAL, 0.001)) %>%\n  mutate(Patient_ID = sub(\".*id-\", \"\", USUBJID))\n\nuse_title2 <- \"Plot of Plasma Drug X (ug/mL) Concentrations Over Time by\\nPatient: PK Evaluable Patients\"\nuse_subtitle2 <- \"Analyte: Plasma Drug X (ug/mL) \\nTreatment Group: ARM A\"\nuse_footnote2 <- \"Program: \\nOutput:\"\n\nresult <- g_ipp(\n  df = adpc_a,\n  xvar = \"NFRLT\",\n  yvar = \"avalog\",\n  xlab = \"Norminal Time from First Dose (hr)\",\n  ylab = \"Concentration (ug/mL)\",\n  id_var = \"Patient_ID\",\n  add_baseline_hline = FALSE,\n  yvar_baseline = \"AVAL\", #  yvar_baseline cannot be NA or ignore\n  title = use_title2,\n  subtitle = use_subtitle2,\n  caption = use_footnote2,\n  plotting_choices = \"separate_by_obs\"\n)\nplot <- result[[1]] + ggplot2::scale_y_log10(breaks = c(0.001, 0.01, 0.1, 1, 10), labels = c(0.001, 0.01, 0.1, 1, 10))\nplot","id":2,"options":{"context":"interactive","classes":"","fig-cap":"","out-width":"700px","warning":"true","message":"true","read-only":"false","output":"true","results":"markup","autorun":"true","dpi":72,"label":"unnamed-chunk-2","out-height":"","fig-width":7,"comment":"","editor-quick-suggestions":"false","fig-height":5,"editor-font-scale":1,"editor-max-height":"500"}}];
+globalThis.qwebrCellDetails = [{"code":"library(tern)\nlibrary(dplyr)\nlibrary(ggplot2)\nlibrary(nestcolor)\n\nadpc <- random.cdisc.data::cadpc\nadpc_a <- adpc %>%\n  filter(\n    PARAM == \"Plasma Drug X\",\n    ARMCD == \"ARM A\"\n  ) %>%\n  mutate(Patient_ID = sub(\".*id-\", \"\", USUBJID))\n\nuse_title <- \"Plot of Plasma Drug X (ug/mL) Concentrations Over Time by\\nPatient: PK Evaluable Patients\"\nuse_subtitle <- \"Analyte: Plasma Drug X (ug/mL) \\nTreatment Group: ARM A\"\nuse_footnote <- \"Program: \\nOutput:\"\n\nresult <- g_ipp(\n  df = adpc_a,\n  xvar = \"NFRLT\",\n  yvar = \"AVAL\",\n  xlab = \"Norminal Time from First Dose (hr)\",\n  ylab = \"Concentration (ug/mL)\",\n  id_var = \"Patient_ID\",\n  add_baseline_hline = FALSE,\n  yvar_baseline = \"AVAL\", #  yvar_baseline cannot be NA or ignore\n  title = use_title,\n  subtitle = use_subtitle,\n  caption = use_footnote,\n  plotting_choices = \"separate_by_obs\"\n)\nplot <- result[[1]] # only show the first subject\nplot","id":1,"options":{"autorun":"true","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":1,"editor-max-height":"500","editor-quick-suggestions":"false","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-1","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}},{"code":"library(tern)\nlibrary(dplyr)\nlibrary(ggplot2)\nlibrary(nestcolor)\n\nadpc <- random.cdisc.data::cadpc\nadpc_a <- adpc %>%\n  filter(\n    PARAM == \"Plasma Drug X\",\n    ARMCD == \"ARM A\"\n  ) %>%\n  mutate(avalog = ifelse(AVAL != 0, AVAL, 0.001)) %>%\n  mutate(Patient_ID = sub(\".*id-\", \"\", USUBJID))\n\nuse_title2 <- \"Plot of Plasma Drug X (ug/mL) Concentrations Over Time by\\nPatient: PK Evaluable Patients\"\nuse_subtitle2 <- \"Analyte: Plasma Drug X (ug/mL) \\nTreatment Group: ARM A\"\nuse_footnote2 <- \"Program: \\nOutput:\"\n\nresult <- g_ipp(\n  df = adpc_a,\n  xvar = \"NFRLT\",\n  yvar = \"avalog\",\n  xlab = \"Norminal Time from First Dose (hr)\",\n  ylab = \"Concentration (ug/mL)\",\n  id_var = \"Patient_ID\",\n  add_baseline_hline = FALSE,\n  yvar_baseline = \"AVAL\", #  yvar_baseline cannot be NA or ignore\n  title = use_title2,\n  subtitle = use_subtitle2,\n  caption = use_footnote2,\n  plotting_choices = \"separate_by_obs\"\n)\nplot <- result[[1]] + ggplot2::scale_y_log10(breaks = c(0.001, 0.01, 0.1, 1, 10), labels = c(0.001, 0.01, 0.1, 1, 10))\nplot","id":2,"options":{"autorun":"true","classes":"","comment":"","context":"interactive","dpi":72,"editor-font-scale":1,"editor-max-height":"500","editor-quick-suggestions":"false","fig-cap":"","fig-height":5,"fig-width":7,"label":"unnamed-chunk-2","message":"true","out-height":"","out-width":"700px","output":"true","read-only":"false","results":"markup","warning":"true"}}];
 
 </script><script type="module">
 // Declare startupMessageQWebR globally
@@ -1083,8 +1083,10 @@ globalThis.qwebrExecuteCode = async function (
 </script><link rel="stylesheet" href="../../assets/css/style.css">
 <meta property="og:title" content="PKCG01 – TLG Catalog - Stable">
 <meta property="og:description" content="Plot of PK Concentration Over Time by Subject">
-<meta property="og:image" content="https://insightsengineering.github.io/tlg-catalog/graphs/pharmacokinetic/assets/img/logo.png">
+<meta property="og:image" content="https://insightsengineering.github.io/tlg-catalog/graphs/pharmacokinetic/pkcg01_files/figure-html/plot1-1.png">
 <meta property="og:site_name" content="TLG Catalog - Stable">
+<meta property="og:image:height" content="960">
+<meta property="og:image:width" content="1344">
 </head>
 <body class="nav-sidebar docked nav-fixed">
 
@@ -3112,8 +3114,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -3275,7 +3275,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {
